@@ -14,7 +14,7 @@ library(visdat)
 
 
 
-### Data Munging
+# Data Munging
 # Load the dataset 
 data <- read_excel("C:/Users/wanji/Desktop/ICT 583/ICT583 s1 2026 dataset.xlsx")
 str (data)
@@ -25,23 +25,33 @@ head (data)
 #Display the last rows of the data 
 tail (data)
 
-
 # Understanding the data : Check the data 
 glimpse (data)
 
 # Composition of data:In-depth understanding of data 
-summary(data)
+summary (data)
 
 # Check for data types 
-sapply(data, class)
+sapply (data, class)
 
 # Check for unique values 
-sapply(data, function(x) length(unique(x)))
+sapply (data, function(x) length(unique(x)))
 
 # Identify numerical and categorical values 
-#Numerical values 
+# Impute Categorical data 
+data <- data %>%
+  mutate(
+    Education_ID = as.factor(Education_ID),
+    Mobility = as.factor(Mobility),
+    MMSE_class = as.factor(MMSE_class),
+    Hyperlipidaemia = as.factor(Hyperlipidaemia)
+  )
+
+# In depth statistics 
+
 
 # Data cleaning 
+
 
 # Identify missing values 
 data %>%
