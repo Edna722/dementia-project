@@ -3,6 +3,8 @@ install.packages("dplyr")
 install.packages("readxl")
 install.packages("ggplot2")
 install.packages("naniar")
+install.packages("e1071")
+
 
 
 # Libraies
@@ -11,6 +13,7 @@ library(readxl)
 library(ggplot2)
 library(naniar)
 library(visdat)
+library(e1071)
 
 
 
@@ -67,7 +70,7 @@ key_vars <-data %>%
   select (Age, body_weight, body_height, waist)
 
 # Descriptive Statistics 
-dsesc_stats <- key_vars%>%
+desc_stats <- key_vars%>%
   summarise (across(
     everything (),
     list(
@@ -93,12 +96,44 @@ plot_histogram <- function (var){
     theme_minimal()
 }
 
-# Plotting
+# Plot for Age
 plot_histogram("Age")
+
+#Plot for body_weight
 plot_histogram("body_weight")
+
+# plot for height
 plot_histogram("body_height")
+
+# Plot for waist
 plot_histogram("waist")
 
+# Checking for Outliers 
+plot_boxplot <- function(var){
+  ggplot(data, aes(y = .data[[var]])) +
+           geom_boxplot(fill = "orange") +
+           labs (title = paste("Boxplot", var), y = var)+
+           theme_minimal()
+}
+
+#   Plot for Age 
+plot_boxplot("Age")
+
+# Plot for body_weight
+plot_boxplot("body_weight")
+
+#Plot for body_height
+plot_boxplot("body_height")
+
+# Plot for waist
+plot_boxplot("waist")
+
+# Checking for skewness
+skewness_values <- key_vars %>%
+  summarise(across (everything(), ~ skewness (., narm = TRUE)))
+skewness_values
+
+# Check for outliers 
 
 # Data cleaning 
 
