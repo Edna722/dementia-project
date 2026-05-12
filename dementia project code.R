@@ -6,6 +6,9 @@ install.packages("naniar")
 install.packages("e1071")
 install.packages("heatmaply")
 install.packages("tidyverse")
+install.packages("naniar")
+install.packages("missMethods")
+install.packages("corrplot")
 
 
 
@@ -18,6 +21,8 @@ library(visdat)
 library(e1071)
 library(heatmaply)
 library(tidyverse)
+library(missMethods)
+library(corrplot)
 
 ## Data Munging
 # Load the dataset 
@@ -111,16 +116,28 @@ data <- data %>%
     where (is.numeric),
     ~ ifelse (is.na (.), median (., na.rm = TRUE),.)
   ))
-
+# Function for categorical method imputation 
+get_mode <- function(x) {
+  x <- x [!is.na(x)]
+  ux <- unique(x)
+  ux [which.max (tabulate (match (x, ux)))]
+}
 
 # Impute for Categorical variables 
 data <- data %>%
   mutate(across(
     where(is.factor),
-    ~ ifelse (is.na(.) , get_mode(.), .)
-    
+    ~ {
+      mode_val <- get_mode(.)
+      factor(ifelse(is.na(.), as.character(mode_val), as.character(.)), levels = levels(.))
+    }
   ))
-
+# Checking if there are missing values 
+data %>%
+  
+  is.na () %>%
+  
+  colSums ()
 
 # Histogram Analysis 
 plot_histogram <- function (var){
@@ -162,13 +179,21 @@ plot_boxplot("body_height")
 # Plot for waist
 plot_boxplot("waist")
 
-# Heatmap for missing values 
-heatmaply_na(data)
-
 # Checking for skewness
 skewness_values <- key_vars %>%
-  summarise(across (everything(), ~ skewness (., narm = TRUE)))
+  summarise(across (everything(), ~ skewness (., na.rm = TRUE)))
 skewness_values
+
+# Correlation Matrix
+cor_matrix <- data %>%
+  select ( where ( is.numeric)) %>%
+  cor()
+
+cor_matrix
+
+# Visualization for the correlation Matrix plot
+corrplot(cor_matrix, method = "color", tl.cex = 0.8)
+
 
 # Check for outliers 
 detect_outliers <- function(x) {
@@ -188,15 +213,8 @@ detect_outliers <- function(x) {
 data <- data %>%
   mutate(across(c(Age, body_weight, body_weight, waist), cap_outliers))
 
-# Missing values data patterns :Finding the intersection of the missing values 
-gg_miss_upset( x = data) 
-# Heatmap to represent the missing values 
+# 
 
-# Create a missing value variable 
-
-# Percentage threshold of missing values : >70%
-
-# Using Median
 
   
   
