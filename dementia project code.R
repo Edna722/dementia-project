@@ -4,6 +4,8 @@ install.packages("readxl")
 install.packages("ggplot2")
 install.packages("naniar")
 install.packages("e1071")
+install.packages("heatmaply")
+install.packages("tidyverse")
 
 
 
@@ -14,18 +16,19 @@ library(ggplot2)
 library(naniar)
 library(visdat)
 library(e1071)
+library(heatmaply)
+library(tidyverse)
 
-
-
-# Data Munging
+## Data Munging
 # Load the dataset 
 data <- read_excel("C:/Users/wanji/Desktop/ICT 583/ICT583 s1 2026 dataset.xlsx")
+
 str (data)
 
 # Display the first 15 rows of the data 
 head (data)
 
-#Display the last rows of the data 
+# Display the last rows of the data 
 tail (data)
 
 # Understanding the data : Check the data 
@@ -34,21 +37,11 @@ glimpse (data)
 # Composition of data:In-depth understanding of data 
 summary (data)
 
-# Check for data types 
-sapply (data, class)
-
 # Check for unique values 
 sapply (data, function(x) length(unique(x)))
 
-# Identify numerical and categorical values 
-# Impute Categorical data 
-data <- data %>%
-  mutate(
-    Education_ID = as.factor (Education_ID),
-    Mobility = as.factor (Mobility),
-    MMSE_class = as.factor (MMSE_class),
-    Hyperlipidaemia = as.factor (Hyperlipidaemia)
-  )
+
+# Statistics 
 
 # In depth statistics 
 data %>%
@@ -88,6 +81,47 @@ desc_stats <- key_vars%>%
 
 desc_stats
 
+
+# Impute Categorical data 
+data <- data %>%
+  mutate(
+    Education_ID = as.factor (Education_ID),
+    Mobility = as.factor (Mobility),
+    MMSE_class = as.factor (MMSE_class),
+    Hyperlipidaemia = as.factor (Hyperlipidaemia)
+  )
+
+
+# Identify missing values 
+data %>%
+  
+  is.na () %>%
+  
+  colSums ()
+
+# Visualize missing data values percentage threshold 
+missing_percent <- colSums(is.na(data)) / nrow(data) * 100
+missing_percent
+
+# Handling the missing values for Numerical and Categorical variables 
+
+# Impute for numerical variables
+data <- data %>%
+  mutate (across(
+    where (is.numeric),
+    ~ ifelse (is.na (.), median (., na.rm = TRUE),.)
+  ))
+
+
+# Impute for Categorical variables 
+data <- data %>%
+  mutate(across(
+    where(is.factor),
+    ~ ifelse (is.na(.) , get_mode(.), .)
+    
+  ))
+
+
 # Histogram Analysis 
 plot_histogram <- function (var){
   ggplot(data, aes (x = .data[[var]])) +
@@ -111,7 +145,7 @@ plot_histogram("waist")
 # Checking for Outliers 
 plot_boxplot <- function(var){
   ggplot(data, aes(y = .data[[var]])) +
-           geom_boxplot(fill = "orange") +
+           geom_boxplot(fill = "steelblue") +
            labs (title = paste("Boxplot", var), y = var)+
            theme_minimal()
 }
@@ -128,28 +162,34 @@ plot_boxplot("body_height")
 # Plot for waist
 plot_boxplot("waist")
 
+# Heatmap for missing values 
+heatmaply_na(data)
+
 # Checking for skewness
 skewness_values <- key_vars %>%
   summarise(across (everything(), ~ skewness (., narm = TRUE)))
 skewness_values
 
 # Check for outliers 
-
-# Data cleaning 
-
-
-# Identify missing values 
-data %>%
+detect_outliers <- function(x) {
+  Q1 <- quantile(x,0.25, na.rm = TRUE)
+  Q3 <- quantile(x, 0.25, na.rm = TRUE)
+  IQR_val <- Q3 - Q1
   
-  is.na () %>%
+  lower <- Q1 - 1.5 * IQR_val
+  upper <- Q3 + 1.5 * IQR_val
   
-  colSums ()
-
-# Visualize missing data values 
-vis_miss (data, warn_large_data = FALSE)
+  x[x < lower] <- lower
+  x[x > upper] <- upper
+  
+  return(x)
+  
+}
+data <- data %>%
+  mutate(across(c(Age, body_weight, body_weight, waist), cap_outliers))
 
 # Missing values data patterns :Finding the intersection of the missing values 
-gg_miss_upset(data) 
+gg_miss_upset( x = data) 
 # Heatmap to represent the missing values 
 
 # Create a missing value variable 
