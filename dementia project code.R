@@ -287,4 +287,17 @@ x <- as.data.frame(x)
 
 
 
+
+# Train/ Test Split: Split the dataset for testing and training needed for the machine Learning models
+
+# Split to < 70-30 > 70% for training and 30 % for testing 
+
+
+
+
+
+
+
+
+
   
