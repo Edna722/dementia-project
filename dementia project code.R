@@ -10,6 +10,7 @@ install.packages("naniar")
 install.packages("missMethods")
 install.packages("corrplot")
 install.packages("caret")
+install.packages("pROC")
 
 
 
@@ -25,7 +26,7 @@ library(tidyverse)
 library(missMethods)
 library(corrplot)
 library(caret)
-
+library(pROC)
 ## Data Munging
 # Load the dataset 
 data =  read_excel("C:/Users/wanji/Desktop/ICT 583/ICT583 s1 2026 dataset.xlsx")
@@ -269,14 +270,15 @@ data <- data %>%
   select (-ID)
 
 # Define Features and Target
-x <- data %>%
-  select (-MMSE_class)
 
 y <- data $MMSE_class
 
+x <- data %>%
+  select (-MMSE_class)
+
 # Encode Categorical Variables 
 
-# Dummy Encoding 
+# Dummy Encoding for predictors 
 
 dummies <- dummyVars(MMSE_class ~ ., data = data)
 
@@ -285,12 +287,113 @@ x <- predict(dummies, newdata = data)
 x <- as.data.frame(x)
 
 
-
-
-
 # Train/ Test Split: Split the dataset for testing and training needed for the machine Learning models
 
-# Split to < 70-30 > 70% for training and 30 % for testing 
+set.seed(123)
+
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+
+x_train <- x[train_index, ]
+x_test <- x[-train_index, ]
+
+y_train <- y[train_index]
+y_test <- y[-train_index]
+
+
+# Baseline model
+
+# Scale data 
+preProcValues <- preProcess(x_train, method = c("center", "scale"))
+
+x_train_scaled <- predict(preProcValues, x_train)
+
+x_test_scaled <- predict(preProcValues, x_test)
+
+# Logistic Regression(Select as a Baseline Model 
+
+baseline_model <- glm(
+  
+  y_train ~ .,
+  
+  data = data.frame (x_train_scaled, y_train),
+  
+  family = "binomial"
+  
+)
+
+# Fit the Logistic Regression model and prediction 
+
+log_pred_prob <- predict(
+  
+  baseline_model, 
+  
+  newdata = data.frame(x_test_scaled),
+  
+  type = "response"
+)
+
+log_pred <- ifelse(log_pred_prob > 0.5, 1, 0)
+
+log_pred <- as.factor (log_pred)
+
+
+# Evaluation of Logistic Regression
+
+confusionMatrix(log_pred, y_test)
+
+# ROC, AUC curve 
+
+roc_log <- roc(
+  
+  response = y_test, 
+  
+  predictor = as.numeric (log_pred_prob)
+)
+
+plot(roc_log)
+
+auc(roc_log)
+
+# Machine Learning Model 1 SVM : Model Performance, Accuracy, ROC curve 
+
+svm_model <- svm(
+  
+  x = x_train_scaled,
+  
+  y = y_train, 
+  
+  kernel = "radial",
+  
+  probability = TRUE
+)
+
+# Fit the SVM model and predictions 
+
+svm_pred <- predict(
+  
+  svm_model,
+  
+  x_test_scaled, 
+  
+  probability = TRUE
+)
+
+# SVM Model Evaluation
+
+confusionMatrix(svm_pred, y_test)
+
+# ROC & AUC
+
+svm_prob <- attr (svm_pred, "probabilities") [,2]
+
+roc_svm <- roc (y_test, svm_prob)
+
+plot(roc_svm)
+
+auc(roc_svm)
+
+
+# Machine Learning Model 3 Random Forest: Model Performance, Accuracy, ROC curve 
 
 
 
