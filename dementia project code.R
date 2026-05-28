@@ -11,6 +11,7 @@ install.packages("missMethods")
 install.packages("corrplot")
 install.packages("caret")
 install.packages("pROC")
+install.packages("randomForest")
 
 
 
@@ -27,6 +28,7 @@ library(missMethods)
 library(corrplot)
 library(caret)
 library(pROC)
+library(randomForest)
 ## Data Munging
 # Load the dataset 
 data =  read_excel("C:/Users/wanji/Desktop/ICT 583/ICT583 s1 2026 dataset.xlsx")
