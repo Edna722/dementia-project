@@ -29,9 +29,12 @@ library(corrplot)
 library(caret)
 library(pROC)
 library(randomForest)
+
+
 ## Data Munging
 # Load the dataset 
-data =  read_excel("C:/Users/wanji/Desktop/ICT 583/ICT583 s1 2026 dataset.xlsx")
+
+data =  read_excel("ICT583 s1 2026 dataset.xlsx")
 
 str (data)
 
@@ -247,7 +250,7 @@ prop.table(table(data$MMSE_class)) * 100
 
 # Feature Analysis
 
-# Numerical vs Target
+# Numerical predictors vs Target
 ggplot (data, aes (x = MMSE_class, y = Age)) +
   
   geom_boxplot (fill = "steelblue") +
@@ -397,12 +400,78 @@ auc(roc_svm)
 
 # Machine Learning Model 3 Random Forest: Model Performance, Accuracy, ROC curve 
 
+rf_model <- randomForest(
+  
+  x = x_train, 
+  
+  y = y_train, 
+  
+  ntree = 100
+  
+)
+
+# Random Forest Prediction
+
+rf_pred <- predict (rf_model, x_test)
+
+# Random Forest Evaluation
+
+confusionMatrix(rf_pred, y_test)
 
 
+# Random Forest ROC/ AUC 
+
+rf_prob <- predict (rf_model, x_test, type = "prob") [,2]
+
+roc_rf <- roc (y_test, rf_prob)
+
+plot (roc_rf)
+
+auc (roc_rf)
 
 
+# Comparison of the best performing models 
+model_results <- data.frame (
+  
+  Model = c (
+    "Logistic Regression Model", 
+    "SVM", 
+    "Random Forest"
+    ), 
+  
+  Accuracy = c (
+    
+    0.8954, 
+    0.8932, 
+    0.8966
+    ), 
+  
+  AUC = c (
+    
+    0.9366,
+    0.8830,
+    0.9385
+    )
+  
+)
 
+model_results
 
+# Visualize
+
+plot (roc_log, col = "blue", main = "ROC comparison")
+
+plot (roc_svm, col = "red", add = TRUE)
+
+plot (roc_rf, col = "green", add = TRUE)
+
+legend ("right", 
+        
+        legend = c ("Logistic", "SVM", "Random Forest"),
+        
+        col = c ("blue", "red", "green"),
+        
+        lwd = 2)
 
 
   
